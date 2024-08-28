@@ -183,7 +183,7 @@ mapped to extended configuration dictionaries.
 | `force` | Force removes the old target, file or folder, and forces a new link (default: false) |
 | `relative` | Use a relative path to the source when creating the symlink (default: false, absolute links) |
 | `canonicalize` | Resolve any symbolic links encountered in the source to symlink to the canonical path (default: true, real paths) |
-| `if` | Execute this in your `$SHELL` and only link if it is successful. |
+| `if` | Execute this in your `$SHELL` and only link if it is successful. Support multi if condition. |
 | `ignore-missing` | Do not fail if the source is missing and create the link anyway (default: false) |
 | `glob` | Treat `path` as a glob pattern, expanding patterns referenced below, linking all *files* matched. (default: false) |
 | `exclude` | Array of glob patterns to remove from glob matches. Uses same syntax as `path`. Ignored if `glob` is `false`. (default: empty, keep all matches) |
@@ -220,6 +220,11 @@ When using glob with the `exclude:` option, the paths in the exclude paths shoul
     ~/.hammerspoon:
       if: '[ `uname` = Darwin ]'
       path: hammerspoon
+    ~/.ssh:
+      - if: '[ `hostname` = zhangsan ]'
+        path: zhangsan
+      - if: '[ `hostname` = wangwu]'
+        path: wangwu
     ~/.config/:
       path: dotconf/config/**
     ~/:
