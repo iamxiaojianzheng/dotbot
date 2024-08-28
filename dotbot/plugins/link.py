@@ -38,6 +38,7 @@ class Link(Plugin):
             test = defaults.get("if", None)
             ignore_missing = defaults.get("ignore-missing", False)
             exclude_paths = defaults.get("exclude", [])
+
             if isinstance(source, dict):
                 # extended config
                 test = source.get("if", test)
@@ -53,13 +54,37 @@ class Link(Plugin):
                 ignore_missing = source.get("ignore-missing", ignore_missing)
                 exclude_paths = source.get("exclude", exclude_paths)
                 path = self._default_source(destination, source.get("path"))
+            elif isinstance(source, list):
+                # only for multi if condition
+                path = None
+                for ifitem in source:
+                    iftest = ifitem.get("if", test)
+                    if iftest is None or not self._test_success(iftest):
+                        continue
+
+                    relative = ifitem.get("relative", relative)
+                    canonical_path = ifitem.get( "canonicalize", ifitem.get("canonicalize-path", canonical_path))
+                    force = ifitem.get("force", force)
+                    relink = ifitem.get("relink", relink)
+                    create = ifitem.get("create", create)
+                    use_glob = ifitem.get("glob", use_glob)
+                    base_prefix = ifitem.get("prefix", base_prefix)
+                    ignore_missing = ifitem.get("ignore-missing", ignore_missing)
+                    exclude_paths = ifitem.get("exclude", exclude_paths)
+                    path = self._default_source(destination, ifitem.get("path"))
+
+                if path is None:
+                    self._log.lowinfo("Skipping %s" % destination)
+                    continue
             else:
                 path = self._default_source(destination, source)
+
             if test is not None and not self._test_success(test):
                 self._log.lowinfo("Skipping %s" % destination)
                 continue
-            path = os.path.normpath(os.path.expandvars(os.path.expanduser(path)))
-            if use_glob and self._has_glob_chars(path):
+
+            path = os.path.expandvars(os.path.expanduser(path))
+            if use_glob:
                 glob_results = self._create_glob_results(path, exclude_paths)
                 self._log.lowinfo("Globs from '" + path + "': " + str(glob_results))
                 for glob_full_item in glob_results:
@@ -112,6 +137,7 @@ class Link(Plugin):
             self._log.info("All links have been set up")
         else:
             self._log.error("Some links were not successfully set up")
+
         return success
 
     def _test_success(self, command):
